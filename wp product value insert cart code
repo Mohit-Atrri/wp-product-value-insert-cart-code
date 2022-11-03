@@ -1,0 +1,256 @@
+//***** Product template code *********//
+
+  $(".addToCart").click(function(e){
+        var proID = $('.proID').val();
+         var leather  = $('select.dropLeather').val();
+         var color  = $('select.dropcolors').val();
+        //   alert(color);
+        var stitching  = $('.wc-pao-addon-stitching-color select option:selected').attr('data-label');
+          
+        var edge  = $('.wc-pao-addon-edge-dye-colors select option:selected').attr('data-label');
+       
+        var button  = $('.wc-pao-addon-button-style select option:selected').attr('data-label');
+    
+        var hardware  = $('.wc-pao-addon-hardware-colors select option:selected').attr('data-label');
+  
+        var initial   = $('.wc-pao-addon-initial-text select option:selected').attr('data-label');
+      
+        var model   = $('.singledial.selected').attr('data-model');
+        // alert(model);
+        var remarks = $('.wc-pao-addon-remarks p textarea').val();
+        
+        // alert(remarks);
+        // var Remarks   = $(' select option:selected').attr('data-label');
+           
+ //******* validations ******//
+           
+        if(!proID){
+            // alert('Please select Key!');
+              $('#rowid').before('<span class="erroridcl">Please select Key!</span');
+            return false;
+        }else{
+           $('span.erroridcl').addClass('hidden');
+        }
+        
+        if(!leather){
+           $('.dropLeather').after('<span class="errorcl">Please select leather type!</span');
+            return false;
+        }else{
+           $('span.errorcl').addClass('hidden');
+        }
+         if(!color){
+           $('.dropcolors').after('<span class="errorcl">Please select color!</span');
+            return false;
+        }
+         if(!stitching){
+           $('.wc-pao-addon-stitching-color').after('<span class="errorcl">Please select Stitching Color!</span');
+            return false;
+        }
+        
+        if(!edge){
+          
+             $('.wc-pao-addon-edge-dye-colors').after('<span class="errorcl">Please select Edge Dye Colors!</span');
+            return false;
+        }
+        
+         if(!button){
+   
+          $('.wc-pao-addon-button-style').after('<span class="errorcl">Please select Button Style!</span');
+            return false;
+         }
+          if(!hardware){
+           
+              $('.wc-pao-addon-hardware-colors').after('<span class="errorcl">Please select Hardware Types and Colors!</span');
+              return false;
+         }
+       
+         if(!initial){
+         
+              $('.wc-pao-addon-initial-text').after('<span class="errorcl">Please select Initial text !</span');
+              return false;
+          }
+        
+         //******* End validations ******//
+         
+         
+        //console.log(lug);
+        //return false;
+        if(proID){
+            $(this).text('Please wait');
+            var that = this;
+            // alert(that);
+            $.ajax({
+                url: "/wp-admin/admin-ajax.php",
+                data: { 
+                    'action': 'addToCartKeys',
+                    'proID': proID,
+                    'stitching': stitching,
+                    'edge': edge,
+                    'button': button,
+                    'hardware': hardware,
+                    'initial': initial,
+                    'remarks':remarks,
+                    'leather':leather,
+                    'color':color,
+                    'model':model
+                    
+                },
+                success: function(result){
+                    // alert(result);
+                    if(result == 1){
+                        window.location.href = '/cart-2';
+                    }else{
+                         $(that).text('Add to cart');      
+                
+                    }
+                }
+            });
+        }
+      })
+      
+      //******** end product template code ********//
+      
+      
+      //****** function.php *********//
+      
+      
+      
+add_action('wp_ajax_addToCartKeys', 'addToCartKeys');
+add_action('wp_ajax_nopriv_addToCartKeys', 'addToCartKeys');
+
+    /**
+     * AJAX add to cart.
+     */
+function addToCartKeys() {        
+
+        $product_id      = $_REQUEST['proID'];
+        $color      = $_REQUEST['color'];
+        $stitching       = $_REQUEST['stitching'];
+        $edge            = $_REQUEST['edge'];
+        $button        = $_REQUEST['button'];
+        $hardware       = $_REQUEST['hardware'];
+        $initial       = $_REQUEST['initial'];
+        $remarks       = $_REQUEST['remarks'];
+        $leather      = $_REQUEST['leather'];
+        $model       = $_REQUEST['model'];
+        
+        $options = array();
+        
+        $options['leather'] = array('Leather'=>$leather);
+        $options['color'] = array('Color'=>$color);
+        $options['stitching'] = array('Stitching'=>$stitching);
+        $options['edge'] = array('Edge'=>$edge);
+     
+        $options['button'] = array('Button'=>$button);
+        $options['hardware'] = array('Hardware'=>$hardware);
+        $options['initial'] = array('Initial'=>$initial);
+        $options['remarks'] = array('Remarks'=>$remarks);
+        $options['model'] = array('Car-Model'=>$model);
+        
+        $quantity          = 1;
+        $passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
+        $product_status    = get_post_status( $product_id );
+        
+
+        
+
+
+        if ( $passed_validation && WC()->cart->add_to_cart( $product_id ,$quantity ,  0,array(), $options) ) {
+
+            do_action( 'woocommerce_ajax_added_to_cart', $product_id );
+            echo 1;
+            //wc_add_to_cart_message( $product_id );
+
+        } else {
+
+            // If there was an error adding to the cart, redirect to the product page to show any errors
+            $data = array(
+                'error'       => true,
+                'product_url' => apply_filters( 'woocommerce_cart_redirect_after_error', get_permalink( $product_id ), $product_id )
+            );
+
+            //wp_send_json( $data );
+            echo 0;
+        }
+
+        die();
+
+}
+
+
+
+// Display custom cart item meta data (in cart and checkout)
+//add_filter( 'woocommerce_get_item_data', 'display_cart_item_custom_meta_data_addToCartKeys', 10, 2 );
+function display_cart_item_custom_meta_data_addToCartKeys( $item_data, $cart_item ) {
+
+    
+    $meta_key = 'Leather';
+    if ( isset($cart_item['leather']) && isset($cart_item['leather'][$meta_key]) ) {
+        $item_data[] = array(
+            'key'       => $meta_key,
+            'value'     => $cart_item['leather'][$meta_key],
+        );
+    }
+
+    
+    $meta_key = 'Stitching';
+    if ( isset($cart_item['stitching']) && isset($cart_item['stitching'][$meta_key]) ) {
+        $item_data[] = array(
+            'key'       => $meta_key,
+            'value'     => $cart_item['stitching'][$meta_key],
+        );
+    }
+        
+    return $item_data;
+}
+
+// Save cart item custom meta as order item meta data and display it everywhere on orders and email notifications.
+add_action( 'woocommerce_checkout_create_order_line_item', 'save_cart_item_custom_meta_as_order_item_meta_addToCartKeys', 10, 4 );
+function save_cart_item_custom_meta_as_order_item_meta_addToCartKeys( $item, $cart_item_key, $values, $order ) {
+    $meta_key = 'leather';
+    if ( isset($values['leather']) && isset($values['leather'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['leather'][$meta_key] );
+    }
+
+        $meta_key = 'Color';
+    if ( isset($values['color']) && isset($values['color'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['color'][$meta_key] );
+    }
+
+     
+    $meta_key = 'Stitching';
+    if ( isset($values['stitching']) && isset($values['stitching'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['stitching'][$meta_key] );
+    }
+    $meta_key = 'Edge';
+    if ( isset($values['edge']) && isset($values['edge'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['edge'][$meta_key] );
+    }
+
+     $meta_key = 'Button';
+    if ( isset($values['button']) && isset($values['button'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['button'][$meta_key] );
+    }
+    $meta_key = 'Hardware';
+    if ( isset($values['hardware']) && isset($values['hardware'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['hardware'][$meta_key] );
+    }
+    $meta_key = 'Initial';
+    if ( isset($values['initial']) && isset($values['initial'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['initial'][$meta_key] );
+    }
+        $meta_key = 'Remarks';
+    if ( isset($values['remarks']) && isset($values['remarks'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['remarks'][$meta_key] );
+    }
+    
+        $meta_key = 'Car-Model';
+    if ( isset($values['model']) && isset($values['model'][$meta_key]) ) {
+        $item->update_meta_data( $meta_key, $values['model'][$meta_key] );
+    }
+    
+}
+
+      
+         //****** End function.php *********//
+      
